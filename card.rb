@@ -8,7 +8,7 @@ class Card
     attr_reader :val, :suit, :color
 
     #These will constantly be changing so we need an accessor
-    attr_accessor :x, :y, :val_text
+    attr_accessor :x, :y, :val_text, :flipped
 
     def initialize(val, suit)
 
@@ -24,6 +24,7 @@ class Card
         @y = 0
 
         @base_card_image = Gosu::Image.new("images/blank_card.png", tileable: true)
+        @back_image = Gosu::Image.new("images/card_back.png", tileable: true)
 
         #Suit image will change automatically
         @suit_image = Gosu::Image.new("images/#{suit}.png", tileable: false)
@@ -31,7 +32,15 @@ class Card
         #For the numbering on the cards
         @font = Gosu::Font.new(45)
 
+        #Change 1 to "A", 11 to "J", etc
         @val_text = set_val_text
+
+        #Can you see the card yet?
+        @flipped = false
+    end
+
+    def flip
+        flipped ? self.flipped = false : self.flipped = true
     end
 
     def set_val_text
@@ -56,7 +65,7 @@ class Card
     end
 
     def draw
-        draw_card_front
+        flipped ? draw_card_front : draw_card_back
     end
 
     def draw_card_front
@@ -83,6 +92,10 @@ class Card
                    y +  @base_card_image.height - 60, 
                    ZOrder::Card, 1, 1, 
                    color == "red" ? 0xff_ff0000 : 0xff_000000)
+    end
+
+    def draw_card_back
+        @back_image.draw(x, y, ZOrder::Card)
     end
 
     #Instead of printing an object address, it will print somthing like "2 of Spades"

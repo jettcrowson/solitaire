@@ -7,10 +7,10 @@ require "./stack"
 
 class Solitaire < Gosu::Window
 
-      attr_accessor :deck, :collumns, :stacks
+      attr_accessor :deck, :collumns, :stacks, :clicked, :selected_cards, :draw_pile
     
       def initialize
-        super(1920, 1080, :fullscreen => true)
+        super(1920, 1080, :fullscreen => false)
 
         @background_image = Gosu::Image.new("images/background.jpg", tileable: true)
 
@@ -23,14 +23,21 @@ class Solitaire < Gosu::Window
         @stacks = []
 
         set_up
+
+        @clicked = false
+        @selected_cards = []
+
+        @base_card_image = Gosu::Image.new("images/blank_card.png", tileable: true)
+
+        @draw_pile = []
       end
 
       def set_up
         #Create the 7 collumns
         (1..7).each{ |num| collumns.push(Collumn.new(num))}
 
-        #Create a stack for each suit
-        ["Hearts", "Diamonds", "Clubs", "Spades"].each{ |suit| stacks.push(Stack.new(suit))}
+        #Create 4 stacks, one for each suit
+        ["Hearts", "Diamonds", "Clubs", "Spades"].each_with_index{ |suit, i| stacks.push(Stack.new(suit, i))}
         
         #Add the initial cards to each of the collumns
         collumns.each_with_index do |collumn, i|
@@ -50,10 +57,135 @@ class Solitaire < Gosu::Window
       
         end
 
+        #Flip the bottom card in each collumn
+        collumns.each do |collumn|
+          collumn.cards[-1].flip
+        end
+
+      end
+
+      #Return a list of the current coordinates of the cards
+      def card_list
+
+        total_cards = []
+
+        #Add all the cards in the collumns
+        collumns.each do |collumn|
+          collumn.cards.each{ |card| total_cards.push(card)}
+        end
+
+        return total_cards
+      
+      end
+
+      def check_click
+        x = self.mouse_x
+        y = self.mouse_y
+
+        check_draw_pile_click(x,y)
+
+        select_collumn_section(x,y) if clicked == false
+        
+      end
+
+      def check_draw_pile_click(x,y)
+        
+        #Check if the click was on the deck
+        if x >= Position::Deck[0] && x <= (Position::Deck[0] + @base_card_image.width) && y >= Position::Deck[1] && y <= (Position::Deck[1] + @base_card_image.height)
+
+          #Make sure there is a card to flip
+          if deck.cards.length > 0
+
+            #Add the card to the draw pile
+            draw_pile.push(deck.top_card)
+
+            #Move it over
+            draw_pile[-1].x += @base_card_image.width + 25
+            
+            #Show it's face
+            draw_pile[-1].flip
+
+          #If there are no cards left to flip
+          else
+            
+            #Add the draw pile to the deck
+            deck.cards.concat(draw_pile)
+
+            deck.cards.each do |card| 
+
+              #Move it back over
+              card.x -= (@base_card_image.width + 25)
+              
+              #Flip it back over
+              card.flip
+
+            end
+
+            #Reset the draw pile
+            self.draw_pile = []
+          
+          end
+
+        end
+
+      end
+
+      def select_collumn_section(x, y)
+
+        #Check each collumn
+        collumns.each do |collumn|
+          
+          #Check the individual cards in each collumn
+          collumn.cards.each_with_index do |card, i|
+            
+            #If it's the bottom card we can just select this
+            if i == collumn.cards.length - 1
+
+              #Check for collision of the entire bottom card
+              if x >= card.x && x <= (card.x + @base_card_image.width) && y >= card.y && y <= (card.y + @base_card_image.height)
+                
+                #Push just the bottom card
+                selected_cards.push(card)
+
+                #Make sure we can't pick up anymore cards while we have these in our hand
+                self.clicked = true
+              
+              end
+            
+            else
+
+              #If we are not on the bottom card and the click matches up with one of the 50px margins on a stacked card
+              if x >= card.x && x <= (card.x + @base_card_image.width) && y >= card.y && y <= (card.y + 50)
+
+                #Loop through the collumn
+                collumn.cards.each_with_index do |c, i|
+
+                  #If the card being checked is higher than the target card, skip it
+                  if i <= (collumn.cards.index(card) - 1) then next end
+
+                  #Add it if not
+                  selected_cards.push(c)
+
+                  self.clicked = true
+
+                end
+
+              end
+
+            end
+
+          end
+
+        end
       end
 
       def update
-
+        if clicked
+          selected_cards.each_with_index do |card, i|
+            card.x = self.mouse_x
+            card.y = self.mouse_y + (i * 50)
+          end
+        end
       end
     
       def draw
@@ -62,11 +194,18 @@ class Solitaire < Gosu::Window
 
         deck.draw
         collumns.each{ |col| col.draw}
+        draw_pile.each{ |card| card.draw}
+        stacks.each{ |stack| stack.draw}
       end
     
       #Close the program if the user presses Escape
       def button_down(id)
         close if id == Gosu::KbEscape
+
+        if id == Gosu::MsLeft
+          check_click
+        end
+
       end
       
     end

@@ -1,5 +1,6 @@
 module ZOrder
     Background = 0
-    Card = 1
+    Deck = 1
+    Card = 2
     Cursor = 999
 end
