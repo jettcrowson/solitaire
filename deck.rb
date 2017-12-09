@@ -19,7 +19,7 @@ class Deck
         end
 
         #Mix up the deck
-        self.cards = cards.shuffle
+        self.cards = cards.shuffle(random: Random.new(2))
     end
 
     #Return a card and remove it from the deck so there are not duplicates

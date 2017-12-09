@@ -31,6 +31,10 @@ class Collumn
         end
 
     end
+    
+    def update
+        if cards[-1].flipped != true then cards[-1].flip end
+    end
 
     def draw
         cards.each{ |card| card.draw}

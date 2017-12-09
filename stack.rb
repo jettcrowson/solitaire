@@ -6,13 +6,15 @@ require "./positions"
 class Stack
 
     #Which suit is the stack for?
-    attr_reader :suit
+    attr_reader :suit,  :num
 
-    attr_accessor :cards, :x, :y
+    attr_accessor :cards, :x, :y, :card_needed
 
     def initialize(suit, num)
 
         @suit = suit
+
+        @num = num
 
         @cards = []
 
@@ -20,22 +22,21 @@ class Stack
 
         @x = Position::Stack[num][0]
         @y = Position::Stack[num][1]
+
+        @card_needed = 1
     end
 
     def draw
         @base_image.draw(x, y, ZOrder::Deck)
 
-                #Set each card in the collumn's position
-                cards.each_with_index do |card, index|
-                    
-                    #Give all the cards the same x value but put each card slightly lower
-                    card.set_pos(Position::Collumn[number - 1][0], Position::Collumn[number - 1][1] + index * 50)
-                    
-                end
+        cards.each{ |card| card.draw}
+
     end
 
     def add_card(card)
+        card.set_pos(Position::Stack[num][0], Position::Stack[num][1])
         cards.push(card)
+        self.card_needed += 1
     end
 
 end

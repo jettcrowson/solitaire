@@ -64,28 +64,46 @@ class Solitaire < Gosu::Window
 
       end
 
-      #Return a list of the current coordinates of the cards
-      def card_list
-
-        total_cards = []
-
-        #Add all the cards in the collumns
-        collumns.each do |collumn|
-          collumn.cards.each{ |card| total_cards.push(card)}
-        end
-
-        return total_cards
-      
-      end
-
       def check_click
         x = self.mouse_x
         y = self.mouse_y
 
-        check_draw_pile_click(x,y)
+        puts selected_cards
 
-        select_collumn_section(x,y) if clicked == false
+        #If you're holding nothing in your hand
+        if selected_cards.length == 0
+
+          check_draw_pile_click(x,y)
+          select_collumn_section(x,y)
         
+        #If you're holding one card
+        elsif selected_cards.length == 1
+
+          check_stack_click(x,y)
+
+        #If you are holding more than one card
+        else
+
+        end
+      end
+
+      def check_stack_click(x,y)
+        stacks.each do |stack|
+          if x >= stack.x && x <= (stack.x + @base_card_image.width) && y >= stack.y && y <= (stack.y + @base_card_image.height)
+            if selected_cards[0].val == stack.card_needed
+              stack.add_card(selected_cards[0])
+              
+              collumns.each do |collumn|
+                collumn.cards.delete(selected_cards[0])
+              end
+
+              deck.cards.delete(selected_cards[0])
+              draw_pile.delete(selected_cards[0])
+
+              self.selected_cards = []
+            end
+          end
+        end
       end
 
       def check_draw_pile_click(x,y)
@@ -146,9 +164,6 @@ class Solitaire < Gosu::Window
                 
                 #Push just the bottom card
                 selected_cards.push(card)
-
-                #Make sure we can't pick up anymore cards while we have these in our hand
-                self.clicked = true
               
               end
             
@@ -166,8 +181,6 @@ class Solitaire < Gosu::Window
                   #Add it if not
                   selected_cards.push(c)
 
-                  self.clicked = true
-
                 end
 
               end
@@ -180,12 +193,14 @@ class Solitaire < Gosu::Window
       end
 
       def update
-        if clicked
+        if selected_cards.length > 0
           selected_cards.each_with_index do |card, i|
             card.x = self.mouse_x
             card.y = self.mouse_y + (i * 50)
           end
         end
+
+        collumns.each{ |collumn| collumn.update}
       end
     
       def draw
