@@ -68,31 +68,85 @@ class Solitaire < Gosu::Window
         x = self.mouse_x
         y = self.mouse_y
 
-        puts selected_cards
-
         #If you're holding nothing in your hand
         if selected_cards.length == 0
 
           check_draw_pile_click(x,y)
           select_collumn_section(x,y)
+
         
         #If you're holding one card
         elsif selected_cards.length == 1
 
           check_stack_click(x,y)
+          check_blank_click(x,y)
 
         #If you are holding more than one card
         else
-
+          check_blank_click(x,y)
         end
       end
 
-      def check_stack_click(x,y)
+      def check_blank_click(x,y)
+
+        #This will be false if the click hits something
+        blank = true
+
+        collumns.each do |collumn|
+
+          collumn.cards.each do |card|
+            next if selected_cards.include?(card)
+            if x >= card.x && x <= (card.x + @base_card_image.width) && y >= card.y && y <= (card.y + @base_card_image.height)
+              blank = false
+              puts "collumn #{blank}"
+            end
+
+          end
+
+        end
+        
         stacks.each do |stack|
+
           if x >= stack.x && x <= (stack.x + @base_card_image.width) && y >= stack.y && y <= (stack.y + @base_card_image.height)
+            blank = false
+            puts "stack #{blank}"
+          end
+
+        end
+
+        if x >= Position::Deck[0] && x <= (Position::Deck[0] + @base_card_image.width) && y >= Position::Deck[1] && y <= (Position::Deck[1] + @base_card_image.height)
+          blank = false
+          puts "deck #{blank}"
+        end
+
+        if blank == true 
+
+          selected_cards.each do |card|
+
+            card.x = card.default_x
+            card.y = card.default_y
+            puts card.default_y
+
+          end
+
+          self.selected_cards = []
+
+        end
+
+      end
+
+      def check_stack_click(x,y)
+
+        stacks.each do |stack|
+
+          if x >= stack.x && x <= (stack.x + @base_card_image.width) && y >= stack.y && y <= (stack.y + @base_card_image.height)
+
+            #Check to see if you are holding the next value needed in the stack
             if selected_cards[0].val == stack.card_needed
+              
               stack.add_card(selected_cards[0])
               
+              #Get rid of the card everywhere else
               collumns.each do |collumn|
                 collumn.cards.delete(selected_cards[0])
               end
@@ -101,6 +155,8 @@ class Solitaire < Gosu::Window
               draw_pile.delete(selected_cards[0])
 
               self.selected_cards = []
+
+              return true
             end
           end
         end
@@ -143,6 +199,10 @@ class Solitaire < Gosu::Window
             self.draw_pile = []
           
           end
+
+        elsif x >= Position::Deck[0] + (@base_card_image.width + 25) && x <= (Position::Deck[0] + @base_card_image.width + (@base_card_image.width + 25)) && y >= Position::Deck[1] && y <= (Position::Deck[1] + @base_card_image.height)
+          
+          selected_cards.push(draw_pile[0])
 
         end
 

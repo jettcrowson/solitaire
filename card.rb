@@ -8,7 +8,7 @@ class Card
     attr_reader :val, :suit, :color
 
     #These will constantly be changing so we need an accessor
-    attr_accessor :x, :y, :val_text, :flipped
+    attr_accessor :x, :y, :val_text, :flipped, :default_x, :default_y
 
     def initialize(val, suit)
 
@@ -37,6 +37,10 @@ class Card
 
         #Can you see the card yet?
         @flipped = false
+
+        @default_x = 0
+
+        @default_y = 0
     end
 
     def flip
@@ -60,6 +64,11 @@ class Card
 
     #For changing the position of the card
     def set_pos(set_x, set_y)
+        if default_x == 0 && default_y == 0
+            self.default_x = set_x
+            self.default_y = set_y
+        end
+
         self.x = set_x
         self.y = set_y
     end
